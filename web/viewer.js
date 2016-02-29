@@ -917,8 +917,7 @@ var PDFViewerApplication = {
 
       store.initializedPromise.then(function resolved() {
         var storedHash = null;
-        if (self.preferenceShowPreviousViewOnLoad &&
-            store.get('exists', false)) {
+        if (self.preferenceShowPreviousViewOnLoad && store.hasEntriesOnLoad) {
           var pageNum = store.get('page', '1');
           var zoom = self.preferenceDefaultZoomValue ||
                      store.get('zoom', DEFAULT_SCALE_VALUE);
@@ -1688,7 +1687,6 @@ window.addEventListener('updateviewarea', function (evt) {
 
   PDFViewerApplication.store.initializedPromise.then(function() {
     PDFViewerApplication.store.setMultiple({
-      'exists': true,
       'page': location.pageNumber,
       'zoom': location.scale,
       'scrollLeft': location.left,

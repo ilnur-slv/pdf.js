@@ -30,6 +30,8 @@ var ViewHistory = (function ViewHistoryClosure() {
   function ViewHistory(fingerprint, cacheSize) {
     this.fingerprint = fingerprint;
     this.cacheSize = cacheSize || DEFAULT_VIEW_HISTORY_CACHE_SIZE;
+    this.hasEntriesOnLoad = false;
+
     this.isInitializedPromiseResolved = false;
     this.initializedPromise =
         this._readFromStorage().then(function (databaseStr) {
@@ -42,16 +44,16 @@ var ViewHistory = (function ViewHistoryClosure() {
       if (database.files.length >= this.cacheSize) {
         database.files.shift();
       }
-      var index;
-      for (var i = 0, length = database.files.length; i < length; i++) {
-        var branch = database.files[i];
+      for (var index = 0, len = database.files.length; index < len; index++) {
+        var branch = database.files[index];
         if (branch.fingerprint === this.fingerprint) {
-          index = i;
+          // Check if the `branch` contains more than a 'fingerprint' entry.
+          this.hasEntriesOnLoad = Object.keys(branch).length > 1;
           break;
         }
       }
-      if (typeof index !== 'number') {
-        index = database.files.push({fingerprint: this.fingerprint}) - 1;
+      if (index === len) { // The 'fingerprint' didn't exist in the `database`.
+        index = database.files.push({ fingerprint: this.fingerprint }) - 1;
       }
       this.file = database.files[index];
       this.database = database;
