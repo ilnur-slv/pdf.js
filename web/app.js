@@ -24,7 +24,7 @@
       'pdfjs-web/view_history', 'pdfjs-web/pdf_thumbnail_viewer',
       'pdfjs-web/toolbar', 'pdfjs-web/secondary_toolbar',
       'pdfjs-web/password_prompt', 'pdfjs-web/pdf_presentation_mode',
-      'pdfjs-web/pdf_document_properties', 'pdfjs-web/hand_tool',
+      'pdfjs-web/pdf_document_properties', 'pdfjs-web/pdf_cursor_tools',
       'pdfjs-web/pdf_viewer', 'pdfjs-web/pdf_rendering_queue',
       'pdfjs-web/pdf_link_service', 'pdfjs-web/pdf_outline_viewer',
       'pdfjs-web/overlay_manager', 'pdfjs-web/pdf_attachment_viewer',
@@ -38,7 +38,7 @@
       require('./pdf_thumbnail_viewer.js'), require('./toolbar.js'),
       require('./secondary_toolbar.js'), require('./password_prompt.js'),
       require('./pdf_presentation_mode.js'),
-      require('./pdf_document_properties.js'), require('./hand_tool.js'),
+      require('./pdf_document_properties.js'), require('./pdf_cursor_tools.js'),
       require('./pdf_viewer.js'), require('./pdf_rendering_queue.js'),
       require('./pdf_link_service.js'), require('./pdf_outline_viewer.js'),
       require('./overlay_manager.js'), require('./pdf_attachment_viewer.js'),
@@ -51,7 +51,7 @@
       root.pdfjsWebViewHistory, root.pdfjsWebPDFThumbnailViewer,
       root.pdfjsWebToolbar, root.pdfjsWebSecondaryToolbar,
       root.pdfjsWebPasswordPrompt, root.pdfjsWebPDFPresentationMode,
-      root.pdfjsWebPDFDocumentProperties, root.pdfjsWebHandTool,
+      root.pdfjsWebPDFDocumentProperties, root.pdfjsWebPDFCursorTools,
       root.pdfjsWebPDFViewer, root.pdfjsWebPDFRenderingQueue,
       root.pdfjsWebPDFLinkService, root.pdfjsWebPDFOutlineViewer,
       root.pdfjsWebOverlayManager, root.pdfjsWebPDFAttachmentViewer,
@@ -62,7 +62,7 @@
                   preferencesLib, pdfSidebarLib, viewHistoryLib,
                   pdfThumbnailViewerLib, toolbarLib, secondaryToolbarLib,
                   passwordPromptLib, pdfPresentationModeLib,
-                  pdfDocumentPropertiesLib, handToolLib, pdfViewerLib,
+                  pdfDocumentPropertiesLib, pdfCursorToolsLib, pdfViewerLib,
                   pdfRenderingQueueLib, pdfLinkServiceLib, pdfOutlineViewerLib,
                   overlayManagerLib, pdfAttachmentViewerLib,
                   pdfFindControllerLib, pdfFindBarLib, domEventsLib, pdfjsLib) {
@@ -87,7 +87,8 @@ var SecondaryToolbar = secondaryToolbarLib.SecondaryToolbar;
 var PasswordPrompt = passwordPromptLib.PasswordPrompt;
 var PDFPresentationMode = pdfPresentationModeLib.PDFPresentationMode;
 var PDFDocumentProperties = pdfDocumentPropertiesLib.PDFDocumentProperties;
-var HandTool = handToolLib.HandTool;
+var CursorTool = pdfCursorToolsLib.CursorTool;
+var PDFCursorTools = pdfCursorToolsLib.PDFCursorTools;
 var PresentationModeState = pdfViewerLib.PresentationModeState;
 var PDFViewer = pdfViewerLib.PDFViewer;
 var RenderingStates = pdfRenderingQueueLib.RenderingStates;
@@ -389,7 +390,7 @@ var PDFViewerApplication = {
 
       self.overlayManager = OverlayManager;
 
-      self.handTool = new HandTool({
+      self.pdfCursorTools = new PDFCursorTools({
         container: container,
         eventBus: eventBus,
       });
@@ -2175,11 +2176,23 @@ function webViewerKeyDown(evt) {
         }
         break;
 
-      case 72: // 'h'
+      case 83: // 's'
         if (!isViewerInPresentationMode) {
-          PDFViewerApplication.handTool.toggle();
+          PDFViewerApplication.eventBus.dispatch('switchcursortool', {
+            source: this,
+            tool: CursorTool.SELECT,
+          });
         }
         break;
+      case 72: // 'h'
+        if (!isViewerInPresentationMode) {
+          PDFViewerApplication.eventBus.dispatch('switchcursortool', {
+            source: this,
+            tool: CursorTool.HAND,
+          });
+        }
+        break;
+
       case 82: // 'r'
         PDFViewerApplication.rotatePages(90);
         break;

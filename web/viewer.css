@@ -968,6 +968,10 @@ html[dir="rtl"] .secondaryToolbarButton > span {
   content: url(images/secondaryToolbarButton-rotateCw.png);
 }
 
+.secondaryToolbarButton.selectTool::before {
+  content: url(images/secondaryToolbarButton-selectTool.png);
+}
+
 .secondaryToolbarButton.handTool::before {
   content: url(images/secondaryToolbarButton-handTool.png);
 }
@@ -1691,6 +1695,10 @@ html[dir='rtl'] #documentPropertiesOverlay .row > * {
 
   .secondaryToolbarButton.rotateCw::before {
     content: url(images/secondaryToolbarButton-rotateCw@2x.png);
+  }
+
+  .secondaryToolbarButton.selectTool::before {
+    content: url(images/secondaryToolbarButton-selectTool@2x.png);
   }
 
   .secondaryToolbarButton.handTool::before {

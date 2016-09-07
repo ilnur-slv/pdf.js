@@ -17,17 +17,19 @@
 
 (function (root, factory) {
   if (typeof define === 'function' && define.amd) {
-    define('pdfjs-web/secondary_toolbar', ['exports', 'pdfjs-web/ui_utils'],
-      factory);
+    define('pdfjs-web/secondary_toolbar', ['exports', 'pdfjs-web/ui_utils',
+      'pdfjs-web/pdf_cursor_tools'], factory);
   } else if (typeof exports !== 'undefined') {
-    factory(exports, require('./ui_utils.js'));
+    factory(exports, require('./ui_utils.js'),
+     require('./pdf_cursor_tools.js'));
   } else {
-    factory((root.pdfjsWebSecondaryToolbar = {}), root.pdfjsWebUIUtils);
+    factory((root.pdfjsWebSecondaryToolbar = {}), root.pdfjsWebUIUtils,
+      root.pdfjsWebPdfCursorTools);
   }
-}(this, function (exports, uiUtils) {
+}(this, function (exports, uiUtils, pdfCursorTools) {
 
 var SCROLLBAR_PADDING = uiUtils.SCROLLBAR_PADDING;
-var mozL10n = uiUtils.mozL10n;
+var CursorTool = pdfCursorTools.CursorTool;
 
 /**
  * @typedef {Object} SecondaryToolbarOptions
@@ -53,7 +55,9 @@ var mozL10n = uiUtils.mozL10n;
  *   clockwise.
  * @property {HTMLButtonElement} pageRotateCcwButton - Button to rotate the
  *   pages counterclockwise.
- * @property {HTMLButtonElement} toggleHandToolButton - Button to toggle the
+ * @property {HTMLButtonElement} cursorSelectToolButton - Button to enable the
+ *   select tool.
+ * @property {HTMLButtonElement} cursorHandToolButton - Button to enable the
  *   hand tool.
  * @property {HTMLButtonElement} documentPropertiesButton - Button for opening
  *   the document properties dialog.
@@ -86,8 +90,10 @@ var SecondaryToolbar = (function SecondaryToolbarClosure() {
         close: false },
       { element: options.pageRotateCcwButton, eventName: 'rotateccw',
         close: false },
-      { element: options.toggleHandToolButton, eventName: 'togglehandtool',
-        close: true },
+      { element: options.cursorSelectToolButton, eventName: 'switchcursortool',
+        eventDetails: { tool: CursorTool.SELECT, }, close: true },
+      { element: options.cursorHandToolButton, eventName: 'switchcursortool',
+        eventDetails: { tool: CursorTool.HAND, }, close: true },
       { element: options.documentPropertiesButton,
         eventName: 'documentproperties', close: true }
     ];
@@ -107,9 +113,9 @@ var SecondaryToolbar = (function SecondaryToolbarClosure() {
 
     this.reset();
 
-    // Bind the event listeners for click and hand tool actions.
+    // Bind the event listeners for click and cursor tool actions.
     this._bindClickListeners();
-    this._bindHandToolListener(options.toggleHandToolButton);
+    this._bindCursorToolsListener(options);
 
     // Bind the event listener for adjusting the 'max-height' of the toolbar.
     this.eventBus.on('resize', this._setMaxHeight.bind(this));
@@ -156,37 +162,38 @@ var SecondaryToolbar = (function SecondaryToolbarClosure() {
       for (var button in this.buttons) {
         var element = this.buttons[button].element;
         var eventName = this.buttons[button].eventName;
+        var eventDetails = this.buttons[button].eventDetails || null;
         var close = this.buttons[button].close;
 
-        element.addEventListener('click', function (eventName, close) {
+        element.addEventListener('click', function (eventName, eventDetails,
+                                                    close) {
           if (eventName !== null) {
-            this.eventBus.dispatch(eventName, { source: this, });
+            var details = { source: this, };
+            for (var property in eventDetails) {
+              details[property] = eventDetails[property];
+            }
+            this.eventBus.dispatch(eventName, details);
           }
           if (close) {
             this.close();
           }
-        }.bind(this, eventName, close));
+        }.bind(this, eventName, eventDetails, close));
       }
     },
 
-    _bindHandToolListener:
-        function SecondaryToolbar_bindHandToolListener(toggleHandToolButton) {
-      var isHandToolActive = false;
-      this.eventBus.on('handtoolchanged', function (e) {
-        if (isHandToolActive === e.isActive) {
-          return;
-        }
-        isHandToolActive = e.isActive;
-        if (isHandToolActive) {
-          toggleHandToolButton.title =
-            mozL10n.get('hand_tool_disable.title', null, 'Disable hand tool');
-          toggleHandToolButton.firstElementChild.textContent =
-            mozL10n.get('hand_tool_disable_label', null, 'Disable hand tool');
-        } else {
-          toggleHandToolButton.title =
-            mozL10n.get('hand_tool_enable.title', null, 'Enable hand tool');
-          toggleHandToolButton.firstElementChild.textContent =
-            mozL10n.get('hand_tool_enable_label', null, 'Enable hand tool');
+    _bindCursorToolsListener:
+        function SecondaryToolbar_bindCursorToolListener(buttons) {
+      this.eventBus.on('cursortoolchanged', function (e) {
+        buttons.cursorSelectToolButton.classList.remove('toggled');
+        buttons.cursorHandToolButton.classList.remove('toggled');
+
+        switch (e.tool) {
+          case CursorTool.SELECT:
+            buttons.cursorSelectToolButton.classList.add('toggled');
+            break;
+          case CursorTool.HAND:
+            buttons.cursorHandToolButton.classList.add('toggled');
+            break;
         }
       });
     },
