@@ -56,6 +56,8 @@ var TEXT_LAYER_RENDER_DELAY = 200; // ms
  * @property {boolean} renderInteractiveForms - Turns on rendering of
  *   interactive form elements. The default is `false`.
  * @property {string} renderer - 'canvas' or 'svg'. The default is 'canvas'.
+ * @property {boolean} apiIgnoreErrors - (optional) Ignore errors during certain
+ *   API calls. The default value is `true`.
  */
 
 /**
@@ -77,6 +79,7 @@ var PDFPageView = (function PDFPageViewClosure() {
     var annotationLayerFactory = options.annotationLayerFactory;
     var enhanceTextSelection = options.enhanceTextSelection || false;
     var renderInteractiveForms = options.renderInteractiveForms || false;
+    var apiIgnoreErrors = options.apiIgnoreErrors !== false;
 
     this.id = id;
     this.renderingId = 'page' + id;
@@ -89,6 +92,7 @@ var PDFPageView = (function PDFPageViewClosure() {
     this.hasRestrictedScaling = false;
     this.enhanceTextSelection = enhanceTextSelection;
     this.renderInteractiveForms = renderInteractiveForms;
+    this.apiIgnoreErrors = apiIgnoreErrors;
 
     this.eventBus = options.eventBus || domEvents.getGlobalEventBus();
     this.renderingQueue = renderingQueue;
@@ -475,6 +479,7 @@ var PDFPageView = (function PDFPageViewClosure() {
           if (textLayer) {
             pdfPage.getTextContent({
               normalizeWhitespace: true,
+              ignoreErrors: self.apiIgnoreErrors,
             }).then(function textContentResolved(textContent) {
               textLayer.setTextContent(textContent);
               textLayer.render(TEXT_LAYER_RENDER_DELAY);
@@ -584,6 +589,7 @@ var PDFPageView = (function PDFPageViewClosure() {
         transform: transform,
         viewport: this.viewport,
         renderInteractiveForms: this.renderInteractiveForms,
+        ignoreErrors: this.apiIgnoreErrors,
         // intent: 'default', // === 'display'
       };
       var renderTask = this.pdfPage.render(renderContext);

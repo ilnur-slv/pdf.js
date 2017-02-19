@@ -492,6 +492,7 @@ var Driver = (function DriverClosure() { // eslint-disable-line no-unused-vars
               // The text builder will draw its content on the test canvas
               initPromise = page.getTextContent({
                 normalizeWhitespace: true,
+                ignoreErrors: true,
               }).then(function(textContent) {
                 return rasterizeTextLayer(textLayerContext, viewport,
                                           textContent, enhanceText);
@@ -536,6 +537,7 @@ var Driver = (function DriverClosure() { // eslint-disable-line no-unused-vars
               canvasContext: ctx,
               viewport: viewport,
               renderInteractiveForms: renderForms,
+              ignoreErrors: true,
             };
             var completeRender = (function(error) {
               // if text layer is present, compose it on top of the page

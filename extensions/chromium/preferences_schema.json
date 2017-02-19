@@ -120,6 +120,10 @@
       "description": "When enabled, pages whose orientation differ from the first page are rotated when printed.",
       "type": "boolean",
       "default": false
+    },
+    "apiIgnoreErrors": {
+      "type": "boolean",
+      "default": true
     }
   }
 }
