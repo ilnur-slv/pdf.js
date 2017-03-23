@@ -391,7 +391,7 @@ function compileType3Glyph(imgData) {
 }
 
 var CanvasExtraState = (function CanvasExtraStateClosure() {
-  function CanvasExtraState(old) {
+  function CanvasExtraState() {
     // Are soft masks and alpha values shapes or opacities?
     this.alphaIsShape = false;
     this.fontSize = 0;
@@ -422,8 +422,6 @@ var CanvasExtraState = (function CanvasExtraStateClosure() {
     this.lineWidth = 1;
     this.activeSMask = null;
     this.resumeSMaskCtx = null; // nonclonable field (see the save method below)
-
-    this.old = old;
   }
 
   CanvasExtraState.prototype = {
@@ -475,6 +473,7 @@ var CanvasGraphics = (function CanvasGraphicsClosure() {
       addContextCurrentTransform(canvasCtx);
     }
     this.cachedGetSinglePixelWidth = null;
+    this.annotationState = null;
   }
 
   function putBinaryImageData(ctx, imgData) {
@@ -1917,7 +1916,11 @@ var CanvasGraphics = (function CanvasGraphicsClosure() {
 
     beginAnnotations: function CanvasGraphics_beginAnnotations() {
       this.save();
-      this.current = new CanvasExtraState();
+
+      this.annotationState = {
+        tmpCanvasEntry: this.canvasFactory.create(1, 1),
+        previousCtx: this.ctx,
+      };
 
       if (this.baseTransform) {
         this.ctx.setTransform.apply(this.ctx, this.baseTransform);
@@ -1925,12 +1928,22 @@ var CanvasGraphics = (function CanvasGraphicsClosure() {
     },
 
     endAnnotations: function CanvasGraphics_endAnnotations() {
+      var tmpCanvasEntry = this.annotationState.tmpCanvasEntry;
+      this.canvasFactory.destroy(tmpCanvasEntry);
+      this.annotationState = null;
+
       this.restore();
     },
 
     beginAnnotation: function CanvasGraphics_beginAnnotation(rect, transform,
                                                              matrix) {
       this.save();
+
+      this.current = new CanvasExtraState();
+      // Reset the canvas context to a fresh state, since creating a new
+      // `CanvasExtraState` only affects our internally tracked properties.
+      var tmpCanvasEntry = this.annotationState.tmpCanvasEntry;
+      copyCtxState(tmpCanvasEntry.context, this.ctx);
 
       if (isArray(rect) && rect.length === 4) {
         var width = rect[2] - rect[0];
@@ -1945,6 +1958,10 @@ var CanvasGraphics = (function CanvasGraphicsClosure() {
     },
 
     endAnnotation: function CanvasGraphics_endAnnotation() {
+      // Reset the canvas context to the previous state.
+      var previousCtx = this.annotationState.previousCtx;
+      copyCtxState(previousCtx, this.ctx);
+
       this.restore();
     },
 
